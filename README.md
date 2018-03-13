@@ -12,7 +12,7 @@ You must have a Flickr account and get a API key [here](https://www.flickr.com/s
 	* The initial bbox
 	* The subdivided bbox
 	* The location of photos as point 
-* Example of attribute table:
+* __Example of attribute table:__
 
 |id|accuracy|owner|farm|server|secret|URL_static|URL_websit|
 |---|---|---|---|---|---|---|---|
@@ -20,7 +20,7 @@ You must have a Flickr account and get a API key [here](https://www.flickr.com/s
 |2147483647|16|70316038@N04|5|4699|ebc0d806f8|https://farm5.staticflickr.com/4699/38928082915_ebc0d806f8.jpg|https://www.flickr.com/photos/70316038@N04/38928082915|
 |2147483647|16|27203581@N07|5|4673|43c3a30954|https://farm5.staticflickr.com/4673/28021875079_43c3a30954.jpg|https://www.flickr.com/photos/27203581@N07/28021875079|
 
-* Example on Royal palace in Brussels:
+* __Example on Royal palace in Brussels:__
 
 Initial box
 ![](Illustrations/initial_bbox.png)
@@ -30,6 +30,13 @@ Subdivided box
 
 Photo locations
 ![](Illustrations/photo_locations.png)
+
+**TODO :** 
+
+- Take as input a shapefile with the Area Of Interest (AOI) as polygon, and compute automatically the coordinates of the initial bbox (using shapely).
+- After each loop of subdivision of the initial bbox, check if bboxes are completely outside the AOI. If yes, remove them to avoid unnecessary subdivision. 
+- Return only photo locations which are completely inside the AOI polygon.
+- Return a .csv file with list of distinct user_id that could be used as input in Extract\_InfoUsers\_Flickr.py.
 
 ------
 
