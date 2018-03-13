@@ -45,3 +45,9 @@ Photo locations
 * The script will return information about each user (including the place of living if provided in the user profile).
 
 **TODO :** Finish the script and clean up 
+
+------
+
+### Extract\_Users\_LongitudinalProfile.py
+
+**TODO :** Don't look for it as it doesn't exists yet. The script should enable to extract all photos (not private) of the user (or a list of users) including their locations (lon/lat) and their 'date of taken'. It could be achieved in a similar fashion than in *Extract\_PhotoLocation\_Flickr.py*, but using the [flickr.people.getPhotos](https://www.flickr.com/services/api/flickr.people.getPhotos.html) function. That way, it would be possible to analyse the touristic profile of the user.
