@@ -4,6 +4,10 @@ Created on Tue Feb  6 14:24:31 2018
 
 @author: tais
 """
+"""
+TODO: Add extraction of all photos for each user, using https://www.flickr.com/services/api/flickr.people.getPhotos.html
+Do not forget to use the extras parameter in the API request (mainly the 'license', 'date_upload', 'date_taken' and 'geo')
+"""
 
 import flickrapi
 import csv

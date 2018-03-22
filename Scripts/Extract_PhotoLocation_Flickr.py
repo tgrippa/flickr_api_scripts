@@ -16,7 +16,6 @@ import geopandas as gpd
 import pyproj
 from shapely.geometry import shape
 from shapely.ops import transform
-import pyproj
 
 '''
 USER INPUTS
@@ -41,18 +40,20 @@ def get_pagenumber_result(bbox,pagenum):
     starttime=time.time()
     while query_succeed==False and (time.time()-starttime)<600: # If 10 minutes after first attempt to connect to Flicker's server
         try:
-            #time.sleep(1)  #Wait for half second
+            time.sleep(1)  #Wait for 1 second
             page=flickr.photos.search(api_key=api_key, bbox=bbox,format='parsed-json', per_page=results_per_page, page=pagenum, extras='geo')
             query_succeed=True
         except:
+            print "API request failed. Try again in 5 sec."
             time.sleep(5) #Wait a bit before retry
             continue
-    return page['photos']['photo']
+        return page['photos']['photo']
 
 # Function to get a result for multiple pages from Flickr API for a specific BBOX
-def get_multiplepages_result(bbox,bboxtotalresult,ncores=2):
+def get_multiplepages_result(bbox,ncores=2):
     # Create a list of page number to request
-    number_page=bboxtotalresult/results_per_page+(1 if bboxtotalresult%results_per_page>0 else 0)
+    number_page=check_number_result_bbox(bbox)[1]
+    time.sleep(1.5)
     list_pagenum=range(number_page+1)[1:]
     # Check for number of cores doesnt exceed available
     nbcpu=multiprocessing.cpu_count()
@@ -108,7 +109,8 @@ def check_number_result_bbox(coord, accu=16):
                            bbox=coord, format='parsed-json',
                            per_page=results_per_page, accuracy=accu)  # By default look for more accurately located information (could be not real accuracy according to my experience)
     total=int(a['photos']['total'])
-    return total
+    nb_pages=int(a['photos']['pages'])
+    return total,nb_pages
 
 # Function returning the area (squared meters) for a geometry provided in WGS84
 def planar_area_from_wgs84_geom(geom):
@@ -164,8 +166,7 @@ bbox_toolarge=[]
 bbox_toolarge.append(initial_bbox)  # List which will contain the coordinates of bbox
 
 ## Print number of result in the initial BBox
-coord="%s,%s,%s,%s"%(bbox_toolarge[0][0],bbox_toolarge[0][1],bbox_toolarge[0][2],bbox_toolarge[0][3])
-nb=check_number_result_bbox(coord)
+nb=check_number_result_bbox("%s,%s,%s,%s"%(minLon,minLat,maxLon,maxLat))[0]
 if nb < maxresult:
     print "There are %s results in the initial BBox."%nb
 else:
@@ -192,7 +193,7 @@ while len(bbox_toolarge)>0:
             continue # Leave the current loop and start the next iteration
         try:
             coord="%s,%s,%s,%s"%(bbox[0],bbox[1],bbox[2],bbox[3])
-            total=check_number_result_bbox(coord)
+            total=check_number_result_bbox(coord)[0]
         except:
             print "Check of number of result failed for item %s in the list. Retry in 5 seconds."%i
             time.sleep(5)  # Wait a bit before continuing
@@ -242,7 +243,7 @@ listofpages=[]
 for bbox in bbox_sizeok:
     coord="%s,%s,%s,%s"%(bbox[0],bbox[1],bbox[2],bbox[3])
     if bbox[4]>0: # Request API only if number of result for the BBOX is more than 0
-        pages_current_bbox=get_multiplepages_result(coord,bbox[4],ncores=20)
+        pages_current_bbox=get_multiplepages_result(coord,ncores=4)
         [listofpages.append(page) for page in pages_current_bbox]
 
 ## Extract information from the pages results and build content of the ouput .csv file
@@ -266,3 +267,15 @@ within_aoi=gpd.GeoSeries(gdf['geometry']).within(aoi_gdf.unary_union)
 within_aoi=gpd.GeoSeries(gdf['geometry']).within(aoi_gdf.ix[0])
 res_intersection=gdf[within_aoi] ## Keep only locations which intersects the AOI
 res_intersection.to_file(path_to_results)
+
+## Export .csv file with list of unique user IDs
+list_of_user=[]
+reader=csv.reader(open(outputcsv_photos,'r'),delimiter=',')
+reader.next() # Pass the first row (header)
+[list_of_user.append(row[4]) for row in reader]
+list_of_user=[[x] for x in set(list_of_user)] # Get unique values of user ID ising 'set'
+outputcsv_listuser=os.path.join(outputfolder,"FlickR_users.csv")
+f=open(outputcsv_listuser,'w')
+writer=csv.writer(f,delimiter=',')
+[writer.writerow(x) for x in list_of_user]
+f.close()
